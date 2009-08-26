@@ -1,14 +1,12 @@
 #!/bin/env python2.5
 
-import binascii, threading, struct, os, Queue
+import binascii, threading, struct, os, Queue, optparse
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory, Protocol
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.ssl import ClientContextFactory
 from twisted.internet.ssl import DefaultOpenSSLContextFactory as SSLContextFactory
-import constants
-
-MAX_PAYLOAD_LENGTH = 256
+import constants, clients
 
 class APNSProtocol(Protocol):
     def __init__(self, messageQueue):
@@ -84,21 +82,24 @@ class APNSFactory(ClientFactory):
             print "Protocol not yet created.  Messaged queued..."
             self.messageQueue.put((deviceToken, payload))
 
-# 
-# Maintains a list of connections to the main APNS server.
-#
 class APNSDaemon(threading.Thread):
+    """ 
+    Maintains a list of connections to the main APNS server.
+    """
+
     def __init__(self):
         self.connections = {}
 
-    # 
-    # Initialises a new app's connection with the APNS server so 
-    # when time comes for requests it can be used.
-    #
     def registerApp(self, app_name, bundle_id, certificate_file, privatekey_file,
                     apns_host, apns_port, feedback_host, feedback_port):
-        # TODO: What if the app is already registered and we also have
-        # connections open
+        """
+        Initialises a new app's connection with the APNS server so when
+        time comes for requests it can be used.
+        """
+
+        if app_name in self.connections:
+            raise ValueError("Application already registered: " + app_name)
+
         print "Registering Application: %s, Bundle ID: %s" % (app_name, bundle_id)
         self.connections[app_name] = {
             'num_connections':          0,
@@ -118,11 +119,10 @@ class APNSDaemon(threading.Thread):
         Sends a message/payload from a given app to a target device.
         """
         if orig_app not in self.connections:
-            print "App Not Registered: ", orig_app
-            return False
+            raise ValueError("Application not registered: " + orig_app)
         
-        if len(payload) > MAX_PAYLOAD_LENGTH:
-            raise ValueError("Payload too large.  Cannot exceed %d bytes" % MAX_PAYLOAD_LENGTH)
+        if len(payload) > constants.MAX_PAYLOAD_LENGTH:
+            raise ValueError("Payload cannot exceed %d bytes" % constants.MAX_PAYLOAD_LENGTH)
 
         connection  = self.connections[orig_app]
         factory     = connection['client_factory']

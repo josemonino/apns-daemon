@@ -69,7 +69,6 @@ class LineClient(object):
             newsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             newsocket.connect(("localhost", self.serverPort))
             self.servers[app]['socket'] = newsocket
-            # connect
 
         line = str(app) + "," + devtoken + "," + payload.replace("\n", " ")
         self.servers[app]['socket'].send(line + "\r\n")
