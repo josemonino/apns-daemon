@@ -1,12 +1,9 @@
 #!/bin/env python2.5
 
-import binascii, threading, struct, os, Queue, optparse
+import threading, Queue, optparse
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory, Protocol
-from twisted.protocols.basic import LineReceiver
-from twisted.internet.ssl import ClientContextFactory
-from twisted.internet.ssl import DefaultOpenSSLContextFactory as SSLContextFactory
-import constants, clients
+import constants
 
 class APNSProtocol(Protocol):
     def __init__(self, messageQueue):
@@ -30,6 +27,7 @@ class APNSProtocol(Protocol):
         # notification messages are binary messages in network order 
         # using the following format: 
         # <1 byte command> <2 bytes length><token> <2 bytes length><payload>
+        import struct
         fmt = "!h32sh%ds" % len(payload) 
         command     = 0
         if len(deviceToken) == 64:
@@ -101,6 +99,7 @@ class APNSDaemon(threading.Thread):
             raise ValueError("Application already registered: " + app_name)
 
         print "Registering Application: %s, Bundle ID: %s" % (app_name, bundle_id)
+        from twisted.internet.ssl import DefaultOpenSSLContextFactory as SSLContextFactory
         self.connections[app_name] = {
             'num_connections':          0,
             'apns_host':                apns_host,
@@ -146,9 +145,27 @@ class APNSDaemon(threading.Thread):
         reactor.listenTCP(90, line_client.LineProtocolFactory(self))
         reactor.run()
 
-def main():
-    daemon = APNSDaemon()
+def read_config_file(daemon, config_file):
+    import os
+    if not os.path.isfile(config_file):
+        raise ValueError("Config file does not exist: " + config_file)
+
+def parse_options(daemon):
+    from optparse import OptionParser
+
+    parser = OptionParser(version = "%prog 0.1")
+    parser.add_option("-c", "--config", dest = "configfile",
+                      help="Config file to read application info from.", metavar = "CONFIG-FILE")
+
+    (options, args) = parser.parse_args()
+
+    if not options.configfile:
+        parser.error("Please specify a valid config filename with the -c option")
+        
+    read_config_file(daemon, options.configfile)
+
     # register all apps here
+    """
     daemon.registerApp("metjungle", "8K9U92BL7X.com.metjungle.pickmeup",
                        os.path.abspath("certs/CertificateFile.pem"),
                        os.path.abspath("certs/PrivateKeyFile.pem"),
@@ -156,6 +173,11 @@ def main():
                        constants.DEFAULT_APNS_DEV_PORT,
                        constants.DEFAULT_FEEDBACK_DEV_HOST,
                        constants.DEFAULT_FEEDBACK_DEV_PORT)
+    """
+
+def main():
+    daemon = APNSDaemon()
+    parse_options(daemon)
     daemon.run()
 
 if __name__ == "__main__":
