@@ -1,0 +1,10 @@
+syntax: glob
+.*.swp
+*.swf
+*.swc
+*.swz
+*.pyc
+*.pyo
+*.log
+*.bak
+tags*
