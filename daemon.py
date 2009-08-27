@@ -104,8 +104,11 @@ class APNSDaemon(threading.Thread):
         self.reactor        = reactor
         self.connections    = {}
 
-    def registerApp(self, app_name, bundle_id, certificate_file, privatekey_file,
-                    apns_host, apns_port, feedback_host, feedback_port):
+    def registerApp(self, app_name, certificate_file, privatekey_file,
+                    apns_host       = constants.DEFAULT_APNS_DEV_HOST,
+                    apns_port       = constants.DEFAULT_APNS_DEV_PORT,
+                    feedback_host   = constants.DEFAULT_FEEDBACK_DEV_HOST,
+                    feedback_port   = constants.DEFAULT_FEEDBACK_DEV_PORT):
         """
         Initialises a new app's connection with the APNS server so when
         time comes for requests it can be used.
@@ -114,7 +117,7 @@ class APNSDaemon(threading.Thread):
         if app_name in self.connections:
             raise errors.AppRegistrationError(app_name, "Application already registered")
 
-        print "Registering Application: %s, Bundle ID: %s" % (app_name, bundle_id)
+        print "Registering Application: %s, Bundle ID: %s" % (app_name)
         from twisted.internet.ssl import DefaultOpenSSLContextFactory as SSLContextFactory
         self.connections[app_name] = {
             'num_connections':          0,
@@ -122,7 +125,6 @@ class APNSDaemon(threading.Thread):
             'apns_port':                apns_port,
             'feedback_host':            feedback_host,
             'feedback_port':            feedback_port,
-            'bundle_id':                bundle_id,
             'certificate_file':         certificate_file,
             'privatekey_file':          privatekey_file,
             'client_factory':           APNSFactory(),
@@ -142,7 +144,7 @@ class APNSDaemon(threading.Thread):
         connection  = self.connections[orig_app]
         factory     = connection['client_factory']
         if connection['num_connections'] == 0:
-            print "Connecting to APNS Server, App Bundle ID: ", orig_app, connection['bundle_id']
+            print "Connecting to APNS Server, App: ", orig_app
             context_factory = connection['client_context_factory']
             self.reactor.connectSSL(connection['apns_host'],
                                connection['apns_port'],

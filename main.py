@@ -37,9 +37,18 @@ def read_config_file(apns_daemon, config_file):
 
     clients = configs['clients']
     for client_name in clients:
-        client = clients[client_name]
-        client_class = client['class']
-        print "Loading client: ", client_class
+        client_data     = clients[client_name]
+        client_class    = client_data['class']
+        parts = client_class.split(".")
+        if len(parts) > 1:
+            client_pkg      = ".".join(parts[:-1])
+            client_module   = __import__(client_pkg, {}, {}, [''])
+            client_class    = getattr(client_module, parts[-1])
+        else:
+            client_class    = eval(parts[-1])
+
+        client = client_class(apns_daemon, **client_data)
+        print "Loading client: ", client
         
 def parse_options(apns_daemon):
     from optparse import OptionParser
@@ -57,13 +66,9 @@ def parse_options(apns_daemon):
 
     # register all apps here
     """
-    apns_daemon.registerApp("metjungle", "8K9U92BL7X.com.metjungle.pickmeup",
-                       os.path.abspath("certs/CertificateFile.pem"),
-                       os.path.abspath("certs/PrivateKeyFile.pem"),
-                       constants.DEFAULT_APNS_DEV_HOST,
-                       constants.DEFAULT_APNS_DEV_PORT,
-                       constants.DEFAULT_FEEDBACK_DEV_HOST,
-                       constants.DEFAULT_FEEDBACK_DEV_PORT)
+    apns_daemon.registerApp("metjungle",
+                            os.path.abspath("certs/CertificateFile.pem"),
+                            os.path.abspath("certs/PrivateKeyFile.pem"))
     """
 
 def main():
