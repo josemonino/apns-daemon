@@ -16,3 +16,22 @@
 #
 ###############################################################################
 
+from twisted.web import http
+
+class APNSRequestChannel(http.HTTPChannel):
+    """
+    def __init__(self, daemon, **kwds):
+        self.daemon = daemon
+        self.reactor.listenTCP(kwds["port"], self)
+    """
+    def requestDone(self, request):
+        print "Request: ", request
+        super(APNSRequestChannel
+
+from twisted.internet.protocol import ClientFactory
+class APNSRequestChannelFactory(ClientFactory):
+    protocol = APNSRequestChannel
+
+from twisted.internet import reactor
+reactor.listenTCP(90, APNSRequestChannelFactory())
+reactor.run()
