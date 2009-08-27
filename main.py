@@ -17,10 +17,9 @@
 #
 ###############################################################################
 
-from twisted.internet import reactor
 import constants, errors, daemon
 
-def read_config_file(daemon, config_file):
+def read_config_file(apns_daemon, config_file):
     """
     Reads the config file and loads config data about all the apps we want
     to support.
@@ -42,7 +41,7 @@ def read_config_file(daemon, config_file):
         client_class = client['class']
         print "Loading client: ", client_class
         
-def parse_options(daemon):
+def parse_options(apns_daemon):
     from optparse import OptionParser
 
     parser = OptionParser(version = "%prog 0.1")
@@ -54,11 +53,11 @@ def parse_options(daemon):
     if not options.configfile:
         parser.error("Please specify a valid config filename with the -c option")
         
-    read_config_file(daemon, options.configfile)
+    read_config_file(apns_daemon, options.configfile)
 
     # register all apps here
     """
-    daemon.registerApp("metjungle", "8K9U92BL7X.com.metjungle.pickmeup",
+    apns_daemon.registerApp("metjungle", "8K9U92BL7X.com.metjungle.pickmeup",
                        os.path.abspath("certs/CertificateFile.pem"),
                        os.path.abspath("certs/PrivateKeyFile.pem"),
                        constants.DEFAULT_APNS_DEV_HOST,
@@ -68,9 +67,10 @@ def parse_options(daemon):
     """
 
 def main():
-    dmon = daemon.APNSDaemon()
-    parse_options(dmon)
-    dmon.run()
+    from twisted.internet import reactor
+    apns_daemon = daemon.APNSDaemon(reactor)
+    parse_options(apns_daemon)
+    apns_daemon.run()
 
 if __name__ == "__main__":
     main()
