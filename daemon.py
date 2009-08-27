@@ -20,7 +20,7 @@
 import threading, Queue, optparse
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory, Protocol
-import constants
+import constants, errors
 
 class APNSProtocol(Protocol):
     def __init__(self, messageQueue):
@@ -113,7 +113,7 @@ class APNSDaemon(threading.Thread):
         """
 
         if app_name in self.connections:
-            raise ValueError("Application already registered: " + app_name)
+            raise errors.AppRegistrationError(app_name, "Application already registered")
 
         print "Registering Application: %s, Bundle ID: %s" % (app_name, bundle_id)
         from twisted.internet.ssl import DefaultOpenSSLContextFactory as SSLContextFactory
@@ -135,10 +135,10 @@ class APNSDaemon(threading.Thread):
         Sends a message/payload from a given app to a target device.
         """
         if orig_app not in self.connections:
-            raise ValueError("Application not registered: " + orig_app)
+            raise errors.AppRegistrationError(orig_name, "Application not registered")
         
         if len(payload) > constants.MAX_PAYLOAD_LENGTH:
-            raise ValueError("Payload cannot exceed %d bytes" % constants.MAX_PAYLOAD_LENGTH)
+            raise errors.PayloadLengthError()
 
         connection  = self.connections[orig_app]
         factory     = connection['client_factory']
@@ -165,7 +165,7 @@ class APNSDaemon(threading.Thread):
 def read_config_file(daemon, config_file):
     import os
     if not os.path.isfile(config_file):
-        raise ValueError("Config file does not exist: " + config_file)
+        raise errors.ConfigFileError(config_file)
 
 def parse_options(daemon):
     from optparse import OptionParser
