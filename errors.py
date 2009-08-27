@@ -33,11 +33,12 @@ class ConfigFileError(Exception):
     """
     Error thrown when the config file is not found.
     """
-    def __init__(self, config_file):
-        self.config_file = config_file
+    def __init__(self, config_file, message):
+        self.config_file    = config_file
+        self.message        = message;
     
     def __str__(self):
-        return "Config file not found: %s" % self.config_file
+        return "Config file error: %s - %s" % (self.config_file, self.message)
 
     
 class PayloadLengthError(Exception):

@@ -1,4 +1,3 @@
-#!/bin/env python2.5
 ###############################################################################
 #
 # Copyright 2009, Sri Panyam
@@ -18,7 +17,6 @@
 ###############################################################################
 
 import threading, Queue, optparse
-from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory, Protocol
 import constants, errors
 
@@ -102,8 +100,9 @@ class APNSDaemon(threading.Thread):
     Maintains a list of connections to the main APNS server.
     """
 
-    def __init__(self):
-        self.connections = {}
+    def __init__(self, reactor):
+        self.reactor        = reactor
+        self.connections    = {}
 
     def registerApp(self, app_name, bundle_id, certificate_file, privatekey_file,
                     apns_host, apns_port, feedback_host, feedback_port):
@@ -145,7 +144,7 @@ class APNSDaemon(threading.Thread):
         if connection['num_connections'] == 0:
             print "Connecting to APNS Server, App Bundle ID: ", orig_app, connection['bundle_id']
             context_factory = connection['client_context_factory']
-            reactor.connectSSL(connection['apns_host'],
+            self.reactor.connectSSL(connection['apns_host'],
                                connection['apns_port'],
                                factory, context_factory)
             connection['num_connections'] = connection['num_connections'] + 1
@@ -158,45 +157,5 @@ class APNSDaemon(threading.Thread):
         # the first time a notification needs to be sent.  But instead we
         # listen to connection on the local network as we are the
         # standalone daemon.  When requests arrive, 
-        import line_client
-        reactor.listenTCP(90, line_client.LineProtocolFactory(self))
-        reactor.run()
-
-def read_config_file(daemon, config_file):
-    import os
-    if not os.path.isfile(config_file):
-        raise errors.ConfigFileError(config_file)
-
-def parse_options(daemon):
-    from optparse import OptionParser
-
-    parser = OptionParser(version = "%prog 0.1")
-    parser.add_option("-c", "--config", dest = "configfile",
-                      help="Config file to read application info from.", metavar = "CONFIG-FILE")
-
-    (options, args) = parser.parse_args()
-
-    if not options.configfile:
-        parser.error("Please specify a valid config filename with the -c option")
-        
-    read_config_file(daemon, options.configfile)
-
-    # register all apps here
-    """
-    daemon.registerApp("metjungle", "8K9U92BL7X.com.metjungle.pickmeup",
-                       os.path.abspath("certs/CertificateFile.pem"),
-                       os.path.abspath("certs/PrivateKeyFile.pem"),
-                       constants.DEFAULT_APNS_DEV_HOST,
-                       constants.DEFAULT_APNS_DEV_PORT,
-                       constants.DEFAULT_FEEDBACK_DEV_HOST,
-                       constants.DEFAULT_FEEDBACK_DEV_PORT)
-    """
-
-def main():
-    daemon = APNSDaemon()
-    parse_options(daemon)
-    daemon.run()
-
-if __name__ == "__main__":
-    main()
+        self.reactor.run()
 

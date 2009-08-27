@@ -48,8 +48,9 @@ class LineProtocolFactory(Factory):
     """
     Factory responsible for handling life cycle of LineProtocol objects.
     """
-    def __init__(self, daemon):
+    def __init__(self, daemon, reactor, **kwds):
         self.apns_daemon = daemon
+        reactor.listenTCP(kwds['port'], self)
 
     def startedConnecting(self, connector):
         print "Started LineClient connection..."

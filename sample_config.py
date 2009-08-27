@@ -19,25 +19,25 @@
 {
     'clients': {
         'line': {
-            'class': 'clients.line.LineProtocolFactory'
+            'class': 'clients.line.LineProtocolFactory',
             'port': 90
         },
         'http': {
-            'class': 'clients.line.HttpProtocolFactory'
+            'class': 'clients.http.HttpProtocolFactory',
             'port': 99
         },
     },
 
     'apps': {
         'app1': {
-            'bundle_id': "App1 BundleID",
-            'certificate_file':    "path_to_certificate_file_1.pem",
-            'privatekey_file':     "path_to_privatekey_file_1.pem"
+            'bundle_id':        "App1 BundleID",
+            'certificate_file': "path_to_certificate_file_1.pem",
+            'privatekey_file':  "path_to_privatekey_file_1.pem"
         },
         'app2': {
-            'bundle_id': "App2 BundleID",
-            'certificate_file':    "path_to_certificate_file_2.pem",
-            'privatekey_file':     "path_to_privatekey_file_2.pem"
+            'bundle_id':        "App2 BundleID",
+            'certificate_file': "path_to_certificate_file_2.pem",
+            'privatekey_file':  "path_to_privatekey_file_2.pem"
         },
     }
 }
