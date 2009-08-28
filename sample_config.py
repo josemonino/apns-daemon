@@ -23,7 +23,7 @@
             'port': 90
         },
         'http': {
-            'class': 'clients.http.HttpProtocolFactory',
+            'class': 'clients.http.APNSSite',
             'port': 99
         },
     },

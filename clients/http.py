@@ -16,22 +16,33 @@
 #
 ###############################################################################
 
-from twisted.web import http
+from twisted.web import server, resource
 
-class APNSRequestChannel(http.HTTPChannel):
-    """
+class APNSResource(resource.Resource):
+    isLeaf = True
     def __init__(self, daemon, **kwds):
-        self.daemon = daemon
-        self.reactor.listenTCP(kwds["port"], self)
-    """
-    def requestDone(self, request):
-        print "Request: ", request
-        super(APNSRequestChannel
+        resource.Resource.__init__(self)
+        self.apns_daemon = daemon
 
-from twisted.internet.protocol import ClientFactory
-class APNSRequestChannelFactory(ClientFactory):
-    protocol = APNSRequestChannel
+    def render_GET(self, request):
+        parts = request.path.split("/")
+        print "Rendering GET Request: ", parts
+        return "Please use POST requests"
 
-from twisted.internet import reactor
-reactor.listenTCP(90, APNSRequestChannelFactory())
-reactor.run()
+    def render_POST(self, request):
+        parts = request.path.split("/")
+        payload = {}
+        print "request headers: ", request.args
+        print "request path: ", parts
+        print "request content: ", request.content.read()
+        print "Rendering POST Request: ", parts, dir(request)
+        return "OK"
+
+class APNSSite(server.Site):
+    def __init__(self, daemon, **kwds):
+        self.root_resource  = APNSResource(daemon, **kwds)
+        self.apns_daemon    = daemon
+
+        server.Site.__init__(self, self.root_resource)
+        daemon.reactor.listenTCP(kwds['port'], self)
+
